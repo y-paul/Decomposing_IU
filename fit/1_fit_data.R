@@ -45,8 +45,8 @@ d_stan[1:7] = lapply(d_stan[1:7], function(x) {
 # stan set up -------------------------------------------------------------
 
 # sampler parameters
-n_chains = 4
-n_iter = 4e3
+n_chains = 8
+n_iter = 2e3
 n_burn = 1e3
 n_thin = 2
 n_cores = n_chains
@@ -173,16 +173,19 @@ for(i in names(stan_mods)) {
                                    i_pars = i_pars), # posterior samples of ind-lvl pars
                        fit_summary = fit_summary, # quick summary of pop-lvl pars
                        performance = perf, # predictive performance metrics
-                       sampling_info = sampling_info # estimation info, including data
+                       sampling_info = sampling_info, # estimation info, including data,
+                       performance_de = perf$de$ind_perf$ba,
+                       performance_ex = perf$ex$ind_perf$ba
+
                        )
   
-  # clean the env
-  rm(stanfit, i_pars, p_pars, sampling_info, fit_summary, perf, trans, compiled) 
+ 
   
   print(i)
 
 }
 
+saveRDS(est_mods, file = 'fit/stan_estimation/posteriors/est_mods_fin.rds')
 
 
 for (i in names(est_mods)) {
@@ -214,6 +217,7 @@ for (i in names(est_mods)) {
   stan_dat$participant_id <- unique(dat$participant_id)
   stan_dat$performance_de_g_level <- rep(performance_de, times=length(stan_dat$id))
   stan_dat$performance_ex_g_level <- rep(performance_ex, times=length(stan_dat$id))
-  
+  stan_dat$iperf_de <- stan_fit$performance_de
+  stan_dat$iperf_ex <- stan_fit$performance_ex
   write.csv(stan_dat, str_c("data/fit/", i, "_parameters.csv"))
 }

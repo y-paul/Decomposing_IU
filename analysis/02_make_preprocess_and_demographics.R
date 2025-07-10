@@ -112,4 +112,48 @@ quantile(pop$mu_gamma_ex, probs=c(0.025, .5, 0.975))
 
 quantile(pop$mu_gamma_de-pop$mu_gamma_ex, probs=c(0.025, .5, 0.975))
 
+quantile(pop$mu_theta_de, probs=c(0.025, .5, 0.975))
+quantile(pop$mu_theta_ex, probs=c(0.025, .5, 0.975))
+
+
+quantile(pop$theta_r, probs=c(0.025, .5, 0.975))
+quantile(pop$gam_r, probs=c(0.025, .5, 0.975))
+quantile(pop$lam_r, probs=c(0.025, .5, 0.975))
+
+
+
+#==========================================#
+# Supplement SE and Pains                  #
+#==========================================#
+
+
+behave_dat <- read.csv("data/processed/behave_dat.csv")
+behave_dat %>% select(mean_ses,mild_pain, moderate_pain, severe_pain) %>% 
+  pivot_longer(cols=all_of(c("mild_pain", "moderate_pain", "severe_pain", "mean_ses"))) %>% 
+  mutate(name = recode(name,mean_ses = "Side Effects", mild_pain ="mild Pain", moderate_pain = "moderate Pain", severe_pain = "Severe Pain")) %>% 
+  ggplot(aes(x = name, fill=name, y = value)) + 
+  geom_boxplot(outlier.alpha=1) + 
+  theme_bw() +
+  labs(x = "Side Effect/Pain", y = "Mean Rating") +
+  guides(fill="none")
+
+behave_dat %>% select(Blähungen, Depression, Durchfall, Fieber, Gedächtnisverlust,Halluzinationen, Juckreiz, Schlaflosigkeit, Schwindel, Sprachstörungen) %>% 
+  pivot_longer(all_of(c("Blähungen", "Depression", "Durchfall", "Fieber", "Gedächtnisverlust","Halluzinationen", "Juckreiz", "Schlaflosigkeit", "Schwindel", "Sprachstörungen"))) %>% 
+  mutate(name = recode(name, Blähungen = "Flatulence",
+                       Depression = "Depression",
+                       Durchfall = "Diarrhea",
+                       Fieber = "Fever",
+                       Gedächtnisverlust ="Memory Loss",
+                       Halluzinationen = "Hallucinations",
+                       Juckreiz = "Itching",
+                       Schlaflosigkeit = "Insomnia",
+                       Schwindel = "Dizziness",
+                       Sprachstörungen = "Speech Disorder")) %>% 
+  mutate(name = fct_reorder(name,value)) %>% 
+  ggplot(aes(x= name, y= value)) + 
+  geom_boxplot(fill="white", color="black", notch=T) + theme_bw() +
+  labs(x= "Side Effect", y = "Median Rating")
+
+
+
 

@@ -1,12 +1,6 @@
 library(tidyverse)
 library(gridExtra)
-
-
-
-# Used for Fig. 1
-
-
-
+RECALC_BAYES <- F
 value_function <- function (v, lambda) {
   
   subj_v <- sapply(v, FUN= function(x) {
@@ -53,7 +47,7 @@ p1 <- ggplot(df_value, aes(x=x, y = value, color=name)) +
         legend.box.background = element_rect(colour = "black", size=.5),
         legend.spacing.y = unit(0, "mm"),
         aspect.ratio=1) +
-  scale_color_manual(values=c("darkred", "darkblue")) + 
+  scale_color_manual(values=c("darkgrey", "darkgreen")) + 
   annotate("text", y=-120, x=-50, angle=50, size=6, label="Overweighting") + 
   annotate("text", y=120, x=-60, size=7, label="Losses")+ 
   annotate("text", y=120, x=60, size=7, label="Gains")
@@ -72,7 +66,7 @@ yp1 <- probability_weighting_function(p, .35)
 yp2 <- probability_weighting_function(p, 1)
 
 dfp <- data.frame(p, yp1, yp2) %>% pivot_longer(c("yp1","yp2"))  %>%
-  mutate(name=recode(name, yp1 = "γ = 1.0 (no PD)", yp2="γ = 0.4 (high PD)"))
+  mutate(name=recode(name, yp2 = "γ = 1.0 (no PD)", yp1="γ = 0.4 (high PD)"))
 
 p2 <- ggplot(dfp, aes(x=p, y=value, color=name)) + 
   geom_vline(xintercept=0.5, alpha=.5, linetype="dotted") +
@@ -81,7 +75,7 @@ p2 <- ggplot(dfp, aes(x=p, y=value, color=name)) +
   theme_classic() + 
   scale_y_continuous(breaks=c(0,.5,1))+
   scale_x_continuous(breaks=c(0,.5,1))+
-  labs(x="Objective Probability", y="Subjective Probability", color="Probability distortion (PD)", title="") +
+  labs(x="Objective Probability", y="Decision Weight", color="Probability distortion (PD)", title="") +
   theme(axis.text = element_text(size=16),
         axis.title=element_text(size=18),
         legend.text = element_text(size=18),
@@ -91,7 +85,7 @@ p2 <- ggplot(dfp, aes(x=p, y=value, color=name)) +
         legend.box.background = element_rect(colour = "black", size=.5),
         legend.spacing.y = unit(0, "mm"),
         aspect.ratio=1) +
-  scale_color_manual(values=c("darkblue", "darkgreen")) +
+  scale_color_manual(values=c("darkgreen", "darkgrey")) +
   annotate("text", y=0.35, x=0.15, angle=25, size=6, color="darkgreen", label="Overweighting")+
   annotate("text", y=0.50, x=0.85, angle=40, size=6, color="darkgreen", label="Underweighting")
 
@@ -127,7 +121,7 @@ p3 <- ggplot(dfp, aes(x=p, y=value, color=name, fill=cond,ymin=higher, ymax=lowe
   theme_classic() + 
   scale_y_continuous(breaks=c(0,.5,1))+
   scale_x_continuous(breaks=c(0,.5,1))+
-  labs(x="Objective Probability", y="Subjective Probability", color="Decision Condition", title="") +
+  labs(x="Objective Probability", y="Decision Weight", color="Decision Condition", title="") +
   theme(axis.text = element_text(size=16),
         axis.title=element_text(size=18),
         legend.text = element_text(size=18),
@@ -137,8 +131,8 @@ p3 <- ggplot(dfp, aes(x=p, y=value, color=name, fill=cond,ymin=higher, ymax=lowe
         legend.box.background = element_rect(colour = "black", size=.5),
         legend.spacing.y = unit(0, "mm"),
         aspect.ratio=1) +
-  scale_color_manual(values=c("darkblue", "darkgreen", "darkred"))+
-  scale_fill_manual(values=c("darkgreen", "darkred")) +
+  scale_color_manual(values=c("darkgrey", "darkgreen", "deeppink"))+
+  scale_fill_manual(values=c("darkgreen", "deeppink")) +
   annotate("segment", x=.85, y=.45, yend=.85, xend=.85, size=1.3) + 
   annotate("segment", x=.85, y=.45, yend=.55, xend=.75, size=1.3) + 
   annotate("text", x=.85, y=.4, label="DE-Gaps",size=6) + 
@@ -151,7 +145,7 @@ p3 <- ggplot(dfp, aes(x=p, y=value, color=name, fill=cond,ymin=higher, ymax=lowe
 
 
 
-
+p3
 
 
 library(gridExtra)
@@ -163,4 +157,16 @@ grid.arrange(p1, p2, p3, nrow=1, top = textGrob("",gp=gpar(fontsize=30,font=2)))
 
 egg::ggarrange(p1, p2, p3, nrow=1)
 
+#ggsave("test.emf",
+#       plot=t,
+#       width=13.33,
+#       height=3.75,
+#       units="in",
+#       dpi=150
+#       )
 
+
+
+p1
+p2
+p3

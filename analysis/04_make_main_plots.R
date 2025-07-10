@@ -203,7 +203,7 @@ value_function <- function (v, lambda) {
   
 }
 
-x <- seq(from=-100, to=100, by=.005)
+x <- seq(from=-4, to=4, by=.005)
 d <- data.frame(id=c(), vde=c(),vex=c(),para=c(), v=c())
 for (i in 1:length(df_function$participant_id)) {
   id <- df_function$participant_id[i]
@@ -253,16 +253,16 @@ plot_B_1_1 <- d %>% pivot_longer(cols=c(vde, vex)) %>%
         axis.title=element_text(size=10),
         axis.text.x = NULL,
         axis.text.y=element_text(size=10)) +
-  scale_x_continuous(breaks=c(0)) +
-  scale_y_continuous(breaks=c(0)) +
+  scale_y_continuous(breaks=c(0, -5, -10)) +
   scale_color_manual(values=c("darkblue", "darkred")) +
   geom_line(
     data = pop_lambda %>% filter(name == "Description"),
     aes(x = v, y = value, group = NULL),
     inherit.aes = FALSE, # Ensures global aesthetics don't interfere
     size = 1.2, color = "black", alpha=0.8 # Make it distinct
-  )
-
+  ) +
+  ylim(-15, 5)
+plot_B_1_1
 
 plot_B_1_2 <- d %>% pivot_longer(cols=c(vde, vex)) %>% 
   mutate(name=recode(name, vde="Description", vex="Experience")) %>% 
@@ -281,15 +281,15 @@ plot_B_1_2 <- d %>% pivot_longer(cols=c(vde, vex)) %>%
         axis.title=element_text(size=10),
         axis.text.x = NULL,
         axis.text.y=element_text(size=10)) +
-  scale_x_continuous(breaks=c(0)) +
-  scale_y_continuous(breaks=c(0)) +
+  scale_y_continuous(breaks=c(0, -5, -10)) +
   scale_color_manual(values=c("darkred")) +
   geom_line(
     data = pop_lambda %>% filter(name == "Experience"),
     aes(x = v, y = value, group = NULL),
     inherit.aes = FALSE, # Ensures global aesthetics don't interfere
     size = 1.2, color = "black", alpha=0.8 # Make it distinct
-  )
+  )+
+  ylim(-15, 5)
 
 
 
@@ -309,39 +309,33 @@ plot_B_1_2 <- d %>% pivot_longer(cols=c(vde, vex)) %>%
 # make comparison boxplots
 # ================================================== #
 
-# tests for labels
-res1 <- ttestBF(x=dat$lambda_de, y=dat$lambda_ex, paired=T)
-res2 <- ttestBF(x=dat$gamma_de, y=dat$gamma_ex, paired=T)
+pop_level_d <- read.csv("data/fit/pop_level/Prelec_gam_LA_pop_level.csv")
 
 
-# Prep labels
-res1 <- round(as.vector(res1),2)
-res2 <- round(as.vector(res2),2)
-if (res1 > 1000) {
-  res1 <- ">1000.00"
-} else {
-  res1 <- str_c("=", res1)
-}
-if (res2 > 1000) {
-  res2 <- ">1000.00"
-} else {
-  res2 <- str_c("=", res1)
-}
+pop_level_d$gap <- pop_level_d$mu_gamma_de - pop_level_d$mu_gamma_ex
+pop_level_d$lambda_gap <- pop_level_d$mu_lambda_de - pop_level_d$mu_lambda_ex
+q1 <- format(round(quantile(pop_level_d$gap, c(0.025, 0.975)), 2), nsmall=2)
+q2 <- format(round(quantile(pop_level_d$lambda_gap, c(0.025, 0.975)), 2), nsmall=2)
+label1 <- str_c("95%-BCI = [", q2[1],",", q2[2], "]")
+label2 <- str_c("95%-BCI = [", q1[1],",", q1[2], "]")
 
-
+median(pop_level_d$lambda_gap)
+median(pop_level_d$gap)
 
 pdat <- dat %>% pivot_longer(cols=c("lambda_de", "lambda_ex")) %>% 
   mutate(name=recode(name, lambda_ex = "Experience", lambda_de = "Description"))
 pdat$name <- factor(as.character(pdat$name), levels=c("Description", "Experience"))
+meana1 <- median(c(pdat$value))
 plot_A_1 <- ggplot(data=pdat, aes(x=name, y=value, fill=name)) + 
   geom_boxplot(notch=T, outlier.alpha=0, alpha=.5) + 
   geom_line(aes(x=name, y=value, group=participant_id), alpha=.15)+ 
-  geom_point(alpha=.1, position=position_jitter(w=0.05, h=0)) + theme_bw() + 
-  labs(y=TeX(r'(${\lambda}$)'), x="Condition", title=str_c("Loss Aversion\n(BF", res1, ")")) + 
+  geom_point(alpha=.1, position=position_jitter(w=0.05, h=0)) +
+  geom_hline(yintercept = meana1, alpha=1) + theme_bw() + 
+  labs(y=TeX(r'(${\lambda}$)'), x="Condition", title="Loss Aversion") + 
   theme(axis.text=element_text(hjust=.5, size=10),
         axis.title=element_text(size=10),
         axis.text.x=element_text(size=10, hjust = c(0.55, 0.45))) +
-  scale_y_continuous(breaks=c(2,4)) +
+  scale_y_continuous(breaks=c(1,2,3,4)) +
   scale_fill_manual(values=c("darkblue", "darkred")) +
   guides(fill="none") +
   theme(text=element_text(size=10))
@@ -350,17 +344,21 @@ plot_A_1
 pdat2 <- dat %>% pivot_longer(cols=c("gamma_de", "gamma_ex")) %>% 
   mutate(name=recode(name, gamma_ex = "Experience", gamma_de = "Description"))
 pdat2$name <- factor(as.character(pdat2$name), levels=c("Description", "Experience"))
-
+meana2 <- median(pdat2$value)
 plot_A_2 <- ggplot(data=pdat2, aes(x=name, y=value, fill=name)) + 
   geom_boxplot(notch=T, outlier.alpha=0, alpha=.5) + 
   geom_line(aes(x=name, y=value, group=participant_id), alpha=.15)+ 
-  geom_point(alpha=.1, position=position_jitter(w=0.05, h=0)) + theme_bw() + 
-  labs(y=TeX(r'(${\gamma}$)'), x="Condition", title=str_c("NPW\n(BF", res2, ")")) + 
+  geom_point(alpha=.1, position=position_jitter(w=0.05, h=0)) +
+  geom_hline( yintercept = meana2, alpha=1) +
+  theme_bw() + 
+  theme_bw() + 
+  labs(y=TeX(r'(${\gamma}$)'), x="Condition", title="NPW") + 
   theme(axis.text=element_text(hjust=.5, size=10),
         axis.title=element_text(size=10),
         axis.text.x=element_text(size=10, hjust = c(0.55, 0.45))) +
   scale_fill_manual(values=c("darkblue", "darkred")) +
-  guides(fill="none") 
+  guides(fill="none") +
+  theme(text=element_text(size=10))
 plot_A_2
 
 
@@ -376,7 +374,7 @@ plot_A_3 <- dat %>% mutate(de_gap = gamma_de-gamma_ex) %>%
         axis.text.x = NULL,
         axis.text.y=element_text(size=10)) +
   scale_x_continuous(breaks=NULL)+
-  labs(y = TeX(r'(${\gamma_D}-{\gamma_E}$)'), title="DE Gap\n", x="") +
+  labs(y = TeX(r'(${\gamma_D}-{\gamma_E}$)'), title="DE Gap", x="") +
   theme(text=element_text(size=10))
 
 
@@ -459,7 +457,7 @@ library(BayesFactor)
 
 # lambda correlation plot
 
-plot_C_1 <- ggplot(dat_for_plot_C %>% filter(name %in% labels[4:5]), aes(x=value, y=UIS_GESAMT, color=name)) + 
+plot_C_1 <- ggplot(dat_for_plot_C %>% filter(name %in% c("Lambda Description", "Lambda Experience")), aes(x=value, y=UIS_GESAMT, color=name)) + 
   stat_smooth(geom="line", se=F, method="lm", alpha=.5, size=2) + 
   geom_point(size=2, alpha=.4) +
   theme_bw() +
@@ -476,7 +474,7 @@ plot_C_1
 
 
 # gamma correlation plot
-plot_C_2 <- ggplot(dat_for_plot_C %>% filter(name %in% labels[1:2]), aes(x=value, y=UIS_GESAMT, color=name)) + 
+plot_C_2 <- ggplot(dat_for_plot_C %>% filter(name %in% c("Gamma Description", "Gamma Experience")), aes(x=value, y=UIS_GESAMT, color=name)) + 
   stat_smooth(geom="line", se=F, method="lm", alpha=.5, size=2) + 
   geom_point(size=2, alpha=.4) +
   theme_bw() +
@@ -494,7 +492,7 @@ plot_C_2
 
 
 # only DE Gap plot
-plot_C_3 <- ggplot(dat_for_plot_C %>% filter(name==labels[3]), aes(x=value, y=UIS_GESAMT,color=labels[3])) + 
+plot_C_3 <- ggplot(dat_for_plot_C %>% filter(name=="DE Gap"), aes(x=value, y=UIS_GESAMT,color=labels[3])) + 
   stat_smooth(geom="line", se=F, method="lm", alpha=.5, size=2) + 
   geom_point(size=2, alpha=.4) +
   theme_bw() +
@@ -558,9 +556,54 @@ plot_C_6 <- ggplot(dat, aes(x=de_gap_rule, y=UIS_GESAMT)) +
   guides(color="none")
 plot_C_6
 
+plot_C_7 <-   dat %>% pivot_longer(cols=c("theta_de", "theta_ex"))%>%
+  ggplot(aes(x=value, y=UIS_GESAMT, color=name)) + 
+  stat_smooth(geom="line", se=F, method="lm", alpha=.5, size=2) + 
+  geom_point(size=2, alpha=.4) +
+  theme_bw() +
+  labs(x=TeX(r'($\theta$)'), y="IU", color="Condition", title="Choice Sensitivity") +
+  theme(text=element_text(size=10)) + 
+  theme(strip.background=element_rect(fill="white"))+ 
+  theme(strip.text=element_text(face="bold", size=10)) +
+  theme(axis.text=element_text(angle=0, hjust=.5, size=10),
+        axis.title=element_text(size=10),
+        legend.position="bottom") +
+  scale_color_manual(values=c("darkblue", "darkred"))+
+  guides(color=guide_legend(nrow=2, byrow=T)) +
+  guides(color="none")
+plot_C_7
+
+plot_C_8 <- ggplot(dat, aes(x=relative_switching, y=UIS_GESAMT)) + 
+  stat_smooth(geom="line", se=F, method="lm", alpha=.5, size=2) + 
+  geom_point(size=2, alpha=.4) +
+  theme_bw() +
+  labs(x="Median Relative Switching", y=" IU", title="Relative Switching") +
+  theme(text=element_text(size=10)) + 
+  theme(axis.text=element_text(angle=0, hjust=.5, size=10),
+        axis.title=element_text(size=10),
+        legend.position="bottom") +
+  guides(color=guide_legend(nrow=2, byrow=T)) + 
+  labs(color="", x="Median Relative Switching") +
+  scale_color_manual(values=c("grey")) +
+  guides(color="none")
+plot_C_8
 
 
-
+plot_C_9 <- ggplot(dat %>% mutate(optimal_choice = ((optimal_ev_choice_desc+optimal_ev_choice_samp)/2)),
+                   aes(x=optimal_choice, y=UIS_GESAMT)) +
+  stat_smooth(geom="line", se=F, method="lm", alpha=.5, size=2) + 
+  geom_point(size=2, alpha=.4) +
+  theme_bw() +
+  labs(x="Median Relative Switching", y=" IU", title="CR: Maximize\n expected value") +
+  theme(text=element_text(size=10)) + 
+  theme(axis.text=element_text(angle=0, hjust=.5, size=10),
+        axis.title=element_text(size=10),
+        legend.position="bottom") +
+  guides(color=guide_legend(nrow=2, byrow=T)) + 
+  labs(color="", x="CR: Maximize expected value\n(choice proportions)") +
+  scale_color_manual(values=c("grey")) +
+  guides(color="none")
+plot_C_9
 # Pop level
 
 
@@ -568,6 +611,9 @@ pop_level_d <- read.csv("data/fit/pop_level/Prelec_gam_LA_pop_level.csv")
 
 
 pop_level_d$gap <- pop_level_d$mu_gamma_de - pop_level_d$mu_gamma_ex
+pop_level_d$lambda_gap <- pop_level_d$mu_lambda_de - pop_level_d$mu_lambda_ex
+quantile(pop_level_d$gap, c(0.025, 0.975))
+quantile(pop_level_d$lambda_gap, c(0.025, 0.975))
 
 m_pop <- mean(pop_level_d$gap)
 lower_upper <- t.test(pop_level_d$gap)$conf.int
@@ -581,7 +627,7 @@ pop_plot <- ggplot(data=pop_level_d, aes(x=gap)) +
   theme_bw() + labs(y="Relative Frequency",x=TeX(r'($\mu_{\gamma,D}-\mu_{\gamma,E}$)')) +
   theme(axis.text=element_text(size=10),
         axis.title=element_text(size=10),) +
-  scale_x_continuous(breaks=c(-.5, -0.4, -.3, -.2, -.1)) +
+  scale_x_continuous(breaks=c(-.5, -.3, -.1)) +
   theme(text=element_text(size=10)) +
   theme(axis.ticks.y = element_blank(), axis.text.y = element_blank())
 
@@ -615,16 +661,17 @@ plot_A_1 + labs(tag="A)") + theme(plot.caption = element_text(hjust = 0),
   plot_layout(heights=c(1.5, 2, -0.6,  2), axis_titles = "collect", nrow=4)
 
 
-ggsave("main_plot.png",units="cm", width=16, height=16.8, dpi=300)
+ggsave("main_plot.png",units="cm", width=16, height=16.5, dpi=300)
 
 
 
 
 
-plot_C_1 + plot_C_2 + plot_C_3 + plot_C_4 + plot_C_6 + plot_C_5 +
-  plot_layout(nrow=2, axis_titles = "collect")
+plot_C_1 + plot_C_2 + plot_C_3 + plot_C_4 + plot_C_6 + plot_C_5 + plot_C_7 + 
+  plot_C_8 + plot_C_9 +
+  plot_layout(nrow=3, axis_titles = "collect")
 
-ggsave("main_plot2.png", units="cm", width=16, height=13.5, dpi=300)
+ggsave("main_plot2.png", units="cm", width=16, height=20.25, dpi=300)
 
 
 

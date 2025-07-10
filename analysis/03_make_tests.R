@@ -31,20 +31,6 @@ dat_for_analysis <- dat
 
 
 
-# ================================================== #
-# Test lambda and gamma between conditions
-# ================================================== #
-
-
-
-res1 <- ttestBF(x=dat_for_analysis$lambda_de, y=dat_for_analysis$lambda_ex, paired=T)
-res2 <- ttestBF(x=dat_for_analysis$gamma_de, y=dat_for_analysis$gamma_ex, paired=T)
-
-
-res1
-res2
-
-
 
 
 
