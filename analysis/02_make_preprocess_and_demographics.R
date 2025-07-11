@@ -79,7 +79,8 @@ cor.test(dat$de_gap, dat$de_gap_rule)
 
 
 
-
+sumtable(dat[,c("UIS_GESAMT", "UIS_A", "UIS_B", "UIS_C", "DERS_GESAMT")],
+         digits=NA, add.median=T)
 
 
 
@@ -111,6 +112,7 @@ quantile(pop$mu_gamma_ex, probs=c(0.025, .5, 0.975))
 
 
 quantile(pop$mu_gamma_de-pop$mu_gamma_ex, probs=c(0.025, .5, 0.975))
+quantile(pop$mu_lambda_de-pop$mu_lambda_ex, probs=c(0.025, .5, 0.975))
 
 quantile(pop$mu_theta_de, probs=c(0.025, .5, 0.975))
 quantile(pop$mu_theta_ex, probs=c(0.025, .5, 0.975))

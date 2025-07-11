@@ -1,6 +1,10 @@
+
+
+
+
 rm(list=ls())
 
-DATA_FILE_TO_USE <- "data/prediction_check/GE_gam_LA_probs.csv"
+DATA_FILE_TO_USE <- "data/prediction_check/Prelec_gam_la_probs.csv"
 
 library(tidyverse)
 library(patchwork)
@@ -8,7 +12,11 @@ dat <- read.csv(DATA_FILE_TO_USE)
 
 
 
-# now lets do all the plots in 3A
+
+# code for plot 3 in manuscript.
+
+# first do posterior predictive checks in 3a:
+
 
 # optim EV
 # Description
@@ -74,6 +82,17 @@ exp_ev_max_2 <- dat %>% filter(cond=="exp") %>% group_by(participant_id) %>%
 
 
 # SEP
+
+
+
+
+
+
+
+# optim EV
+
+
+
 # Description
 exp_se_freq1 <- dat %>% filter(cond=="desc") %>%
   filter(!is.na(chosen_se_freq)) %>% group_by(participant_id) %>% 
@@ -152,7 +171,11 @@ exp_se_freq1/
 
 
 
-# optim Treatment
+# optim EB
+
+
+
+
 # Description
 exp_ev_be_max_1 <- dat %>% 
   filter(!is.na(chosen_optim_be_ev)) %>% 
@@ -229,7 +252,10 @@ exp_ev_be_max_1/
 
 
 
-#  SEI
+#  Minimize Worst Side Effect
+
+
+
 # Description
 exp_se_raw_1 <- dat %>% 
   filter(!is.na(chosen_optim_se_raw)) %>% 
@@ -308,7 +334,10 @@ exp_se_raw_1/
 
 
 
-# these plots are for LOO Acc
+
+
+
+# do loo acc, 3b
 fit_dat <- read.csv("data/fit/Prelec_gam_LA_parameters.csv")
 plot_data <- fit_dat %>% select(iperf_de, iperf_ex)
 
@@ -332,11 +361,12 @@ loo1 <- plot_data %>%
         plot.tag = element_text(size = 14, face = "bold")) +
   labs(x = "Participant",
        y = "LOO Accuracy",
-       subtitle = "Approximate out of sample choice accuracy",
+       subtitle = "Approximate out of\nsample choice accuracy",
        tag = "B)") +
   scale_color_manual(name = "Condition", values = c("Description" = "darkblue", "Experience" = "darkred")) +
   theme(legend.position = "bottom") +  # move legend to bottom
-  guides(color = guide_legend(override.aes = list(size = 4)))  # enlarge legend points
+  guides(color = guide_legend(override.aes = list(size = 4)))  +# enlarge legend points
+  theme(legend.justification = c(0.3, 0))
 
 loo1
 
@@ -365,20 +395,97 @@ loo2
 
 
 
+
+
+
+# do parameter recovery, 3c
+dx = read.csv2('fit/parameter_recovery_medians.csv')
+
+#
+library(ggplot2)
+library(patchwork)
+
+par_rec_plts = lapply(c('theta', 'gamma', 'lambda'), function(p) {
+  
+  xy = data.frame(x = dx[,paste0(p, '_gen')],
+                  y = dx[,paste0(p, '_rec')],
+                  cond = dx$cond)
+  
+  lims = c(0, max(xy[,1:2]))
+  
+  # titles 
+  if(p == 'gamma') tt = '\u03B3'
+  if(p == 'lambda') tt = '\u03bb'
+  if(p == 'theta') tt = '\u03B8'
+  
+  plt = ggplot(xy, mapping = aes(x = x, 
+                                 y = y,
+                                 color = cond)) +
+    geom_point(size = 1, alpha=.5) +
+    geom_abline(slope = 1, intercept = 0, lty = 1) +
+    geom_vline(xintercept = 1, lty = 3) +
+    geom_hline(yintercept = 1, lty = 3) +
+    scale_color_manual('Condition', 
+                       values = c(desc = "darkblue",
+                                  exp = "darkred"),
+                       labels = c('Description', 'Experience')) +
+    xlab('Generated') +
+    ylab('Recovered') +
+    ylim(lims) +
+    xlim(lims) +
+    labs(subtitle=tt) +
+    theme_bw() +
+    theme(plot.subtitle = element_text(hjust = .5))
+  
+  if(p == 'lambda') plt = plt + 
+    scale_y_log10(limits = c(min(xy[,1:2]), max(xy[,1:2]))) +
+    scale_x_log10(limits = c(min(xy[,1:2]), max(xy[,1:2])))
+  
+  return(plt)
+  
+})
+
+
+
+gamma_plot_recovery <- par_rec_plts[[2]] + guides(color="none") +
+  theme(text=element_text(size=12, color="black")) +
+  labs(y = "") +
+  theme(axis.title.y=element_blank()) +
+  scale_x_continuous(breaks=c(0, 1, 2)) + 
+  scale_y_continuous(breaks=c(0, 1, 2), limits=c(0,2)) 
+
+
+lambda_plot_recovery <- par_rec_plts[[3]]+ guides(color="none") +
+  theme(text=element_text(size=12, color="black"), plot.tag = element_text(size = 14, face = "bold")) +
+  labs(tag = "C)") 
+
+
+
+
+
+
+
+
+
+
+ # the layout is a bit complex to fit everything
+
+
+
 negative_height <- -0.45
 just_label <- 1
-
+expand_fc = 2
 
 
 maximize_expected_value <- wrap_plots(
-  exp_ev_max_1 +
+  exp_ev_max_1 + scale_x_discrete(expand=expansion(add = expand_fc)) +
     labs(tag = "A)") +
     theme(
       plot.tag = element_text(size = 14, face = "bold"),
       axis.title.y = element_text(margin = margin(r = 8)),
       plot.margin = margin(2, 5, 1, 5)
     ) + theme(axis.title.y = element_text(hjust =just_label)), plot_spacer(),
-  exp_ev_max_2 +
+  exp_ev_max_2 +scale_x_discrete(expand=expansion(add = expand_fc))+
     labs(y = NULL) +
     theme(
       plot.margin = margin(1, 5, 2, 5)
@@ -387,21 +494,21 @@ maximize_expected_value <- wrap_plots(
   heights = c(1,negative_height, 1)
 )
 
-minimize_side_effect <- ((exp_se_raw_1 +
+minimize_side_effect <- ((exp_se_raw_1 +scale_x_discrete(expand=expansion(add = expand_fc)) +
                             theme(plot.margin = margin(5, 5, 0, 5))) / plot_spacer() /
-                           (exp_se_raw_2 +
+                           (exp_se_raw_2 +scale_x_discrete(expand=expansion(add = expand_fc)) +
                               theme(plot.margin = margin(0, 5, 0, 5))) ) + plot_layout(heights=c(1,negative_height, 1))
 
-minimize_side_effect_p <- ((exp_se_freq1 +
+minimize_side_effect_p <- ((exp_se_freq1 +scale_x_discrete(expand=expansion(add = expand_fc)) +
                               theme(plot.margin = margin(5, 5, 0, 5))) /
                              plot_spacer() /
-                             (exp_se_freq2 +
+                             (exp_se_freq2 +scale_x_discrete(expand=expansion(add = expand_fc)) +
                                 theme(plot.margin = margin(0, 5, 0, 5))) ) + plot_layout(heights=c(1,negative_height, 1))
 
 
-maximize_treatment <-( (exp_ev_be_max_1 +
+maximize_treatment <-( (exp_ev_be_max_1 +scale_x_discrete(expand=expansion(add = expand_fc)) +
                           theme(plot.margin = margin(5, 5, 0, 5))) / plot_spacer() /
-                         (exp_ev_be_max_2 +
+                         (exp_ev_be_max_2 +scale_x_discrete(expand=expansion(add = expand_fc)) +
                             theme(plot.margin = margin(0, 5, 0, 5))) ) + plot_layout(heights=c(1,negative_height, 1))
 
 # Make the final layout
@@ -410,9 +517,9 @@ top_row <- (maximize_expected_value |
               minimize_side_effect_p |
               maximize_treatment) +
   plot_layout(ncol = 4, widths = c(1, 1, 1, 1)) & 
-  theme(plot.margin = margin(2, 2, 2, 2))  # tight margins between plots
+  theme(plot.margin = margin(2, 5, 2, 5))  # tight margins between plots
 
-bottom_row <- loo1 | loo2 | plot_spacer() | plot_spacer()
+bottom_row <- loo1 | loo2 | lambda_plot_recovery | gamma_plot_recovery
 
 # Combine with relative heights
 main_plot <- top_row / bottom_row + 
@@ -424,7 +531,7 @@ main_plot
 
 
 
-ggsave("supplement_plot1.png",plot=main_plot, units="cm", width=16, height=12, dpi=200)
+ggsave("plot3.png",plot=main_plot, units="cm", width=16, height=12, dpi=300)
 
 
 

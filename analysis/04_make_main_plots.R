@@ -36,7 +36,7 @@ dat <- dat_complete
 
 
 
-
+# code for plot 4
 
 # ================================================== #
 # make curve plots
@@ -665,32 +665,3 @@ ggsave("main_plot.png",units="cm", width=16, height=16.5, dpi=300)
 
 
 
-
-
-plot_C_1 + plot_C_2 + plot_C_3 + plot_C_4 + plot_C_6 + plot_C_5 + plot_C_7 + 
-  plot_C_8 + plot_C_9 +
-  plot_layout(nrow=3, axis_titles = "collect")
-
-ggsave("main_plot2.png", units="cm", width=16, height=20.25, dpi=300)
-
-
-
-
-
-
-# p1 <- egg::ggarrange(plot_A_1, plot_A_2, plot_A_3,
-#                plot_B_1, plot_B_2, plot_B_3,
-#                nrow=2, widths=c(1,1,1), heights=c(1,1.1), 
-#                labels = c("A)","", "", "B)", "", ""),
-#                label.args=list(gp=grid::gpar(font=14, fontsize=24)))
-# p1
-#ggsave("main_plot.png", plot=arrangeGrob(final_grid),units="cm", width=16.5, height=17, dpi=300)
-
-
-
-p2 <- egg::ggarrange(plot_C_1, plot_C_2, plot_C_3, plot_C_4,
-                     nrow=2, widths=c(1,1,1,1))
-
-
-
-ggsave("main_plot2.png",plot=p2, units="cm", width=16, height=14, dpi=300)
